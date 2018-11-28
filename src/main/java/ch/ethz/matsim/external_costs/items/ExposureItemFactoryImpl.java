@@ -32,7 +32,7 @@ public class ExposureItemFactoryImpl implements ExposureItemFactory {
         for (int i = startBin+1; i<endBin; i++) {
             exposureTimes[i] = this.timeBinLength;
         }
-        exposureTimes[startBin] = exposureItem.getActivityEndTime() - endBin * this.timeBinLength;
+        exposureTimes[endBin] = exposureItem.getActivityEndTime() - endBin * this.timeBinLength;
 
         return exposureTimes;
     }

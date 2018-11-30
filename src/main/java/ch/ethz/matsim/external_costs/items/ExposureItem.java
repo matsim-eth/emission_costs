@@ -36,4 +36,12 @@ public class ExposureItem {
     public double getExposureTime() {
         return this.activityEndTime - this.activityStartTime;
     }
+
+    public Id<Person> getPersonId() {
+        return personId;
+    }
+
+    public Id<ActivityFacility> getFacilityId() {
+        return facilityId;
+    }
 }

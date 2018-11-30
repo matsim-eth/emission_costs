@@ -15,6 +15,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.facilities.ActivityFacility;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class ExposureTimeListener implements ActivityStartEventHandler, ActivityEndEventHandler {
@@ -64,6 +65,25 @@ public class ExposureTimeListener implements ActivityStartEventHandler, Activity
     @Override
     public void reset(int iteration) {
         this.personId2ExposureItem.clear();
+    }
+
+    public void finish() {
+        Iterator<ExposureItem> iterator = this.personId2ExposureItem.values().iterator();
+
+        while (iterator.hasNext()) {
+            ExposureItem exposureItem = iterator.next();
+            Id<ActivityFacility> facilityId = exposureItem.getFacilityId();
+
+            // ignore null facilities for now
+            if (facilityId != null) {
+                Coord coord = scenario.getActivityFacilities().getFacilities().get(facilityId).getCoord();
+
+                // add cumulated exposure times
+                this.cumulativeExposureTimeQuadTree.add(new CumulativeExposureTimeImpl(this.exposureItemFactory.getExposurePerTimeBin(exposureItem), coord));
+            }
+
+            iterator.remove();
+        }
     }
 
 }

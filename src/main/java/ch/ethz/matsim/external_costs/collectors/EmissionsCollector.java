@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class EmissionsCollector implements ExternalityCollector {
     private Collection<ExternalCostCalculator> externalCostCalculators;
-    private Map<Id<Person>, Map<String, Double>> personId2CostType2Value = new HashMap<>();
+    private Map<Id<Person>, Map<String, Double>> emissionsPerPerson = new HashMap<>();
 
     public EmissionsCollector(Collection<ExternalCostCalculator> externalCostCalculators) {
         this.externalCostCalculators = externalCostCalculators;
@@ -23,15 +23,19 @@ public class EmissionsCollector implements ExternalityCollector {
         if (externality instanceof Emissions) {
 
             Id<Person> personId = ((Emissions) externality).getPersonId();
-            personId2CostType2Value.putIfAbsent(personId, new HashMap<>());
+            emissionsPerPerson.putIfAbsent(personId, new HashMap<>());
 
             for (ExternalCostCalculator externalCostCalculator : externalCostCalculators) {
 
-                personId2CostType2Value.get(personId).putIfAbsent(externalCostCalculator.getType(), 0.0);
+                emissionsPerPerson.get(personId).putIfAbsent(externalCostCalculator.getType(), 0.0);
 
-                double costs = personId2CostType2Value.get(personId).get(externalCostCalculator.getType()) + externalCostCalculator.calculate(externality);
-                personId2CostType2Value.get(personId).put(externalCostCalculator.getType(), costs);
+                double costs = emissionsPerPerson.get(personId).get(externalCostCalculator.getType()) + externalCostCalculator.calculate(externality);
+                emissionsPerPerson.get(personId).put(externalCostCalculator.getType(), costs);
             }
         }
+    }
+
+    public Map<Id<Person>, Map<String, Double>> getEmissionsPerPerson() {
+        return emissionsPerPerson;
     }
 }

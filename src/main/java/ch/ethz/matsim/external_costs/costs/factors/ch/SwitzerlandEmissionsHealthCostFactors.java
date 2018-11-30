@@ -6,21 +6,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwitzerlandEmissionsHealthCostFactors implements EmissionsCostFactors {
-    private final String type = "health_costs";
-
-    // costs per ton of CO2-eq
-    private final double costPerTonPM10 = 177900;
+    // costs per g of PM10
+    private final double costPerTonPM10 = 177900 / 1000. / 1000.;
 //
 //            57,200
 //            29,400
 
     @Override
     public double getCostFactor(String pollutant) {
-        return this.costPerTonPM10;
-    }
-
-    @Override
-    public String getType() {
-        return this.type;
+        if (pollutant.equals("PM")) {
+            return this.costPerTonPM10;
+        }
+        return 0.0;
     }
 }

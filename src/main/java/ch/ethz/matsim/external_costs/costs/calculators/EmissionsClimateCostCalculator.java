@@ -5,7 +5,7 @@ import ch.ethz.matsim.external_costs.items.Emissions;
 import ch.ethz.matsim.external_costs.items.Externality;
 
 public class EmissionsClimateCostCalculator implements ExternalCostCalculator {
-    private String type;
+    private String type = "emissions_climate_costs";
     private EmissionsCostFactors emissionsCostFactors;
 
     public EmissionsClimateCostCalculator(EmissionsCostFactors emissionsCostFactors) {

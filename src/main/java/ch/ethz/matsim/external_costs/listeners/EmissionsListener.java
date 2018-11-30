@@ -8,13 +8,7 @@ import org.matsim.contrib.emissions.events.ColdEmissionEvent;
 import org.matsim.contrib.emissions.events.ColdEmissionEventHandler;
 import org.matsim.contrib.emissions.events.WarmEmissionEvent;
 import org.matsim.contrib.emissions.events.WarmEmissionEventHandler;
-import org.matsim.contrib.emissions.types.ColdPollutant;
-import org.matsim.contrib.emissions.types.WarmPollutant;
 import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
-import org.matsim.vehicles.Vehicle;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class EmissionsListener implements WarmEmissionEventHandler, ColdEmissionEventHandler {
     private Vehicle2DriverEventHandler v2deh;
@@ -27,25 +21,13 @@ public class EmissionsListener implements WarmEmissionEventHandler, ColdEmission
 
     @Override
     public void handleEvent(ColdEmissionEvent event) {
-        Id<Vehicle> vehicleId = event.getVehicleId();
-        Id<Person> personId = v2deh.getDriverOfVehicle(vehicleId);
-
-        Map<String, Double> emissions = new HashMap<>();
-        for (ColdPollutant coldPollutant : event.getColdEmissions().keySet()) {
-            emissions.put(coldPollutant.getText(), event.getColdEmissions().get(coldPollutant));
-        }
-        this.emissionsCollector.addExternality(new Emissions(personId, vehicleId, event.getTime(), event.getLinkId(), emissions));
+        Id<Person> personId = v2deh.getDriverOfVehicle(event.getVehicleId());
+        this.emissionsCollector.addExternality(new Emissions(personId, event.getVehicleId(), event.getTime(), event.getLinkId(), event.getColdEmissions()));
     }
 
     @Override
     public void handleEvent(WarmEmissionEvent event) {
-        Id<Vehicle> vehicleId = event.getVehicleId();
-        Id<Person> personId = v2deh.getDriverOfVehicle(vehicleId);
-
-        Map<String, Double> emissions = new HashMap<>();
-        for (WarmPollutant warmPollutant : event.getWarmEmissions().keySet()) {
-            emissions.put(warmPollutant.getText(), event.getWarmEmissions().get(warmPollutant));
-        }
-        this.emissionsCollector.addExternality(new Emissions(personId, vehicleId, event.getTime(), event.getLinkId(), emissions));
+        Id<Person> personId = v2deh.getDriverOfVehicle(event.getVehicleId());
+        this.emissionsCollector.addExternality(new Emissions(personId, event.getVehicleId(), event.getTime(), event.getLinkId(), event.getWarmEmissions()));
     }
 }

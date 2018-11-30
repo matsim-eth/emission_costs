@@ -6,10 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwitzerlandEmissionsClimateCostFactors implements EmissionsCostFactors {
-    private final String type = "climate_costs";
-
-    // costs per ton of CO2-eq
-    private final double costPerTonCO2eq = 121.5;
+    // costs per g of CO2-eq
+    private final double costPerTonCO2eq = 121.5 / 1000. / 1000.;
     private final Map<String, Integer> globalWarmingPotential = new HashMap<>();
 
     public SwitzerlandEmissionsClimateCostFactors() {
@@ -20,11 +18,9 @@ public class SwitzerlandEmissionsClimateCostFactors implements EmissionsCostFact
 
     @Override
     public double getCostFactor(String pollutant) {
-        return this.costPerTonCO2eq * globalWarmingPotential.get(pollutant);
-    }
-
-    @Override
-    public String getType() {
-        return this.type;
+        if (globalWarmingPotential.keySet().contains(pollutant)) {
+            return this.costPerTonCO2eq * globalWarmingPotential.get(pollutant);
+        }
+        return 0.0;
     }
 }

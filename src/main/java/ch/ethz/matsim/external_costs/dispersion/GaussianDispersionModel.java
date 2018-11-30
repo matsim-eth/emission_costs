@@ -10,6 +10,7 @@ public class GaussianDispersionModel implements DispersionModel {
 
     @Override
     public double calculate(double r) {
-        return Math.exp(- Math.pow(r,2) / (2 * Math.pow(sigma,2)));
+        double C = 1 / (2*Math.PI*Math.pow(sigma,2));
+        return C * Math.exp(- Math.pow(r,2) / (2 * Math.pow(sigma,2)));
     }
 }

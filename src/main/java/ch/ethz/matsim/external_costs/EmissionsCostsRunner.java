@@ -44,9 +44,21 @@ public class EmissionsCostsRunner {
 
     public static void main(String[] args) throws IOException {
 
-        String configFile = args[0];
-        String eventFile = args[1];
-        String outputFile = args[2];
+//        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/defaultIVTConfig_w_emissions.xml";
+//        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/800.events.xml.gz";
+//        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/emissionsPerPerson.csv";
+
+//        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/switzerland_config_w_emissions.xml";
+//        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/20.events.xml.gz";
+//        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/emissionsPerPerson.csv";
+
+        String configFile = "/home/ctchervenkov/Documents/scenarios/pipeline/tchervi10pct/switzerland_config_w_emissions.xml";
+        String eventFile = "/home/ctchervenkov/Documents/scenarios/pipeline/tchervi10pct/0.events.xml.gz";
+        String outputFile = "/home/ctchervenkov/Documents/scenarios/pipeline/tchervi10pct/emissionsPerPerson.csv";
+
+//        String configFile = args[0];
+//        String eventFile = args[1];
+//        String outputFile = args[2];
         new EmissionsCostsRunner(configFile, eventFile, outputFile).run();
     }
 

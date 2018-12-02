@@ -7,8 +7,8 @@ import java.util.Map;
 
 public class SwitzerlandEmissionsHealthCostFactors implements EmissionsCostFactors {
     // costs per g of PM10
-    private final double costPerTonPM10 = 177900 / 1000. / 1000.;
-//
+    private final double costPerTonPM10 = 1.0;
+//             177900 / 1000. / 1000.
 //            57,200
 //            29,400
 

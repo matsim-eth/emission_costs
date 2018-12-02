@@ -52,10 +52,15 @@ public class ExposureTimeListener implements ActivityStartEventHandler, Activity
 
         // ignore null facilities for now
         if (facilityId != null) {
-            Coord coord = scenario.getActivityFacilities().getFacilities().get(event.getFacilityId()).getCoord();
+            // TODO : This is strange and should not be needed!
+            if (scenario.getActivityFacilities().getFacilities().containsKey(facilityId)) {
 
-            // add cumulated exposure times
-            this.cumulativeExposureTimeQuadTree.add(new CumulativeExposureTimeImpl(this.exposureItemFactory.getExposurePerTimeBin(exposureItem), coord));
+                // get coordinate of facility
+                Coord coord = scenario.getActivityFacilities().getFacilities().get(facilityId).getCoord();
+
+                // add cumulated exposure times
+                this.cumulativeExposureTimeQuadTree.add(new CumulativeExposureTimeImpl(this.exposureItemFactory.getExposurePerTimeBin(exposureItem), coord));
+            }
         }
 
         // remove from map
@@ -76,10 +81,15 @@ public class ExposureTimeListener implements ActivityStartEventHandler, Activity
 
             // ignore null facilities for now
             if (facilityId != null) {
-                Coord coord = scenario.getActivityFacilities().getFacilities().get(facilityId).getCoord();
+                // TODO : This is strange and should not be needed!
+                if (scenario.getActivityFacilities().getFacilities().containsKey(facilityId)) {
 
-                // add cumulated exposure times
-                this.cumulativeExposureTimeQuadTree.add(new CumulativeExposureTimeImpl(this.exposureItemFactory.getExposurePerTimeBin(exposureItem), coord));
+                    // get coordinate of facility
+                    Coord coord = scenario.getActivityFacilities().getFacilities().get(facilityId).getCoord();
+
+                    // add cumulated exposure times
+                    this.cumulativeExposureTimeQuadTree.add(new CumulativeExposureTimeImpl(this.exposureItemFactory.getExposurePerTimeBin(exposureItem), coord));
+                }
             }
 
             iterator.remove();

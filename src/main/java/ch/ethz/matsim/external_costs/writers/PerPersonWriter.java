@@ -1,4 +1,4 @@
-package writers;
+package ch.ethz.matsim.external_costs.writers;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;

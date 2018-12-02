@@ -2,9 +2,6 @@ package ch.ethz.matsim.external_costs.costs.factors.ch;
 
 import ch.ethz.matsim.external_costs.costs.factors.EmissionsCostFactors;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class SwitzerlandEmissionsHealthCostFactors implements EmissionsCostFactors {
     // costs per g of PM10
     private final double costPerTonPM10 = 1.0;

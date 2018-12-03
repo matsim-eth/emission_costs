@@ -4,7 +4,7 @@ import ch.ethz.matsim.external_costs.costs.factors.EmissionsCostFactors;
 
 public class SwitzerlandEmissionsHealthCostFactors implements EmissionsCostFactors {
     // costs per g of PM10
-    private final double costPerTonPM10 = 1.0;
+    private final double costPerTonPM10 = 46000 / 1e6;
 //             177900 / 1000. / 1000.
 //            57,200
 //            29,400

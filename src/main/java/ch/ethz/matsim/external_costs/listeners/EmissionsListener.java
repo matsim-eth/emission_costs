@@ -1,6 +1,6 @@
 package ch.ethz.matsim.external_costs.listeners;
 
-import ch.ethz.matsim.external_costs.collectors.EmissionsCollector;
+import ch.ethz.matsim.external_costs.collectors.ExternalityCollector;
 import ch.ethz.matsim.external_costs.items.Emissions;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
@@ -12,9 +12,9 @@ import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
 
 public class EmissionsListener implements WarmEmissionEventHandler, ColdEmissionEventHandler {
     private Vehicle2DriverEventHandler v2deh;
-    private EmissionsCollector emissionsCollector;
+    private ExternalityCollector emissionsCollector;
 
-    public EmissionsListener(Vehicle2DriverEventHandler v2deh, EmissionsCollector emissionsCollector) {
+    public EmissionsListener(Vehicle2DriverEventHandler v2deh, ExternalityCollector emissionsCollector) {
         this.v2deh = v2deh;
         this.emissionsCollector = emissionsCollector;
     }

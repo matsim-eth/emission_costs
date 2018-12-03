@@ -19,104 +19,84 @@
 
 package ch.ethz.matsim.external_costs.exposure;
 
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.trafficmonitoring.TimeBinUtils;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class IntervalHandler implements ActivityStartEventHandler, ActivityEndEventHandler {
-
-	private final SortedMap<Double, Double[][]> duration = new TreeMap<>();
-	private final Map<Id<Link>,Integer> link2xbins;
-	private final Map<Id<Link>,Integer> link2ybins;
-	private final  Double timeBinSize;
-	private final  Double simulationEndTime;
-	private final  int noOfxCells;
-	private final  int noOfyCells;
+	private Scenario scenario;
+	private ExposureTimeQuadTree exposureTimeQuadTree;
 	private final  Set<Id<Person>> recognisedPersons = new HashSet<>();
+	final int timeBinSize;
+	final int noTimeBins;
+	final double cellSize;
 
 
-	public IntervalHandler(Double timeBinSize, Double simulationEndTime, GridTools gridTools){
-		this.timeBinSize=timeBinSize;
-
-		if ( simulationEndTime.isInfinite() ) throw new RuntimeException("Please set the simulation end time to a real value. Aborting...");
-
-		this.simulationEndTime = simulationEndTime;
-		this.noOfxCells = gridTools.getNoOfXCells();
-		this.noOfyCells = gridTools.getNoOfYCells();
-		this.link2xbins = gridTools.getLink2XBins();
-		this.link2ybins = gridTools.getLink2YBins();
-		this.reset(0);
+	public IntervalHandler(ExposureTimeQuadTree exposureTimeQuadTree){
+		this.exposureTimeQuadTree = exposureTimeQuadTree;
+		this.scenario = exposureTimeQuadTree.getScenario();
+		this.timeBinSize = exposureTimeQuadTree.getTimeBinSize();
+		this.noTimeBins = exposureTimeQuadTree.getNoTimeBins();
+		this.cellSize = exposureTimeQuadTree.getCellSize();
 	}
 
 	@Override
 	public void reset(int iteration) {
-		recognisedPersons.clear();
-		for(int i=0; i<simulationEndTime/timeBinSize+1; i++){
-			duration.put(i*timeBinSize, new Double[noOfxCells][noOfyCells]);
-			for(int j=0; j< noOfxCells; j++){
-				for(int k=0; k< noOfyCells; k++){
-					duration.get(i*timeBinSize)[j][k]=0.0;
-				}
-			}
-		}
+		this.recognisedPersons.clear();
+		this.exposureTimeQuadTree.getQuadTree().clear();
 	}
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
 
 		Id<Link> linkId = event.getLinkId();
-		if(link2xbins.get(linkId)!=null && link2ybins.get(linkId)!=null){
-			int xCell = link2xbins.get(linkId); 
-			int	yCell = link2ybins.get(linkId);
 
-			Double currentTimeBin = Math.ceil(event.getTime()/timeBinSize)*timeBinSize;
+		// get time bin and time within current interval
+        int currentTimeBin = TimeBinUtils.getTimeBinIndex(event.getTime(), timeBinSize, noTimeBins);
+		double currentTimeBinUpperLimit = this.timeBinSize * (currentTimeBin + 1);
+		double timeWithinCurrentTimeBin = event.getTime() + this.timeBinSize - currentTimeBinUpperLimit;
 
-			if(currentTimeBin<timeBinSize) currentTimeBin=timeBinSize;
+		// get coordinate of event link
+		Coord linkCoord = this.scenario.getNetwork().getLinks().get(linkId).getCoord();
 
-			Double timeWithinCurrentInterval = new Double(event.getTime()-currentTimeBin+timeBinSize);
-			if(recognisedPersons.contains(event.getPersonId())){	
-				// time interval of activity
-				double prevDuration = duration.get(currentTimeBin)[xCell][yCell];
-				
-				double updatedDuration = prevDuration - timeBinSize + timeWithinCurrentInterval;
-				duration.get(currentTimeBin)[xCell][yCell] = updatedDuration;
-				
-//				if (prevDuration>timeBinSize) { // this does not looks correct because prevDuration is sum of actDurations in that time bin for all persons amit Oct'15
-//					prevDuration = prevDuration - timeWithinCurrentInterval;
-//					duration.get(currentTimeBin)[xCell][yCell] = prevDuration;
-//				}
-				currentTimeBin += timeBinSize;
+		if(recognisedPersons.contains(event.getPersonId())){
 
-				// later time intervals
-				while(currentTimeBin <= simulationEndTime){
-					
-					double prevDurationL = duration.get(currentTimeBin)[xCell][yCell];
-					duration.get(currentTimeBin)[xCell][yCell] = prevDurationL - timeBinSize;
-					
-//					if (prevDurationL>timeBinSize) {
-//						prevDurationL = prevDurationL - timeBinSize;
-//						duration.get(currentTimeBin)[xCell][yCell] = prevDurationL;
-//					}
-					
-					currentTimeBin += timeBinSize;
-				}
-			}else{ // person not yet recognised
-				recognisedPersons.add(event.getPersonId());
-				Double tb = new Double(timeBinSize);
-				// time bins prior to events time bin
-				while(tb < currentTimeBin){
-					duration.get(tb)[xCell][yCell] += timeBinSize;
-					tb += timeBinSize;
-				}
-				// time bin of event
-				duration.get(currentTimeBin)[xCell][yCell] += timeWithinCurrentInterval;
+			// update cumulative durations for time interval of activity
+			this.exposureTimeQuadTree.add(linkCoord, currentTimeBin, timeWithinCurrentTimeBin - this.timeBinSize);
+            currentTimeBin++;
+
+			// update cumulative durations for later time intervals
+			while(currentTimeBin < this.noTimeBins){
+                this.exposureTimeQuadTree.add(linkCoord, currentTimeBin, -this.timeBinSize);
+				currentTimeBin++;
 			}
+
+		}else{ // person not yet recognised
+
+            // add to quadtree if nothing yet present
+            if (!this.exposureTimeQuadTree.isContaining(linkCoord)) {
+                this.exposureTimeQuadTree.addNewExposureItemAt(linkCoord);
+            }
+
+			recognisedPersons.add(event.getPersonId());
+
+			// time bins prior to events time bin
+			for (int timeBin = 0; timeBin < currentTimeBin; timeBin++) {
+                this.exposureTimeQuadTree.add(linkCoord, timeBin, this.timeBinSize);
+			}
+
+			// time bin of event
+            this.exposureTimeQuadTree.add(linkCoord, currentTimeBin, timeWithinCurrentTimeBin);
 		}
 	}
 
@@ -124,34 +104,33 @@ public class IntervalHandler implements ActivityStartEventHandler, ActivityEndEv
 	public void handleEvent(ActivityStartEvent event) {
 
 		Id<Link> linkId = event.getLinkId();
+		this.recognisedPersons.add(event.getPersonId());
 
-		if(link2xbins.get(linkId)!=null && link2ybins.get(linkId)!=null){
-			if(!recognisedPersons.contains(event.getPersonId()))recognisedPersons.add(event.getPersonId());
+		// get time bin and time within current interval
+        int currentTimeBin = TimeBinUtils.getTimeBinIndex(event.getTime(), timeBinSize, noTimeBins);
+		double currentTimeBinUpperLimit = this.timeBinSize * (currentTimeBin + 1);
+		double timeWithinCurrentTimeBin = currentTimeBinUpperLimit - event.getTime();
 
-			int	xCell = link2xbins.get(linkId);
-			int	yCell = link2ybins.get(linkId);
+		// get coordinate of event link
+		Coord linkCoord = this.scenario.getNetwork().getLinks().get(linkId).getCoord();
 
-			Double currentTimeBin = Math.ceil(event.getTime()/timeBinSize)*timeBinSize;
-			if(currentTimeBin<timeBinSize) currentTimeBin=timeBinSize;
-			Double timeWithinCurrentInterval = -event.getTime()+currentTimeBin;
+        // add to quadtree if nothing yet present
+        if (!this.exposureTimeQuadTree.isContaining(linkCoord)) {
+            this.exposureTimeQuadTree.addNewExposureItemAt(linkCoord);
+        }
 
-			// time interval of activity
-			double prevDuration = duration.get(currentTimeBin)[xCell][yCell];
-			prevDuration = prevDuration + timeWithinCurrentInterval;
-			duration.get(currentTimeBin)[xCell][yCell] = prevDuration;
-			currentTimeBin += timeBinSize;
+		// update cumulative durations for time interval of activity
+		this.exposureTimeQuadTree.add(linkCoord, currentTimeBin, timeWithinCurrentTimeBin);
+		currentTimeBin++;
 
-			// later time intervals
-			while(currentTimeBin <= simulationEndTime){
-				double prevDurationL = duration.get(currentTimeBin)[xCell][yCell];
-				prevDurationL = prevDurationL + timeBinSize;
-				duration.get(currentTimeBin)[xCell][yCell]=prevDurationL;
-				currentTimeBin += timeBinSize;
-			}
+		// update cumulative durations for later time intervals
+		while(currentTimeBin < this.noTimeBins){
+			this.exposureTimeQuadTree.add(linkCoord, currentTimeBin, this.timeBinSize);
+			currentTimeBin++;
 		}
 	}
 
-	public SortedMap<Double, Double[][]> getDuration() {
-		return duration;
-	}
+    public ExposureTimeQuadTree getExposureTimeQuadTree() {
+        return exposureTimeQuadTree;
+    }
 }

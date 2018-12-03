@@ -42,9 +42,9 @@ public class IntervalHandler implements ActivityStartEventHandler, ActivityEndEv
 	final double cellSize;
 
 
-	public IntervalHandler(ExposureTimeQuadTree exposureTimeQuadTree){
+	public IntervalHandler(Scenario scenario, ExposureTimeQuadTree exposureTimeQuadTree){
 		this.exposureTimeQuadTree = exposureTimeQuadTree;
-		this.scenario = exposureTimeQuadTree.getScenario();
+		this.scenario = scenario;
 		this.timeBinSize = exposureTimeQuadTree.getTimeBinSize();
 		this.noTimeBins = exposureTimeQuadTree.getNoTimeBins();
 		this.cellSize = exposureTimeQuadTree.getCellSize();

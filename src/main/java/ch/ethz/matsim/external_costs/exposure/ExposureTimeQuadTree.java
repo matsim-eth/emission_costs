@@ -1,39 +1,26 @@
 package ch.ethz.matsim.external_costs.exposure;
 
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.collections.QuadTree;
 
 import java.util.Collection;
 import java.util.HashSet;
 
 public class ExposureTimeQuadTree {
-
-    final private Scenario scenario;
     private final int timeBinSize;
     private final int noTimeBins;
     private final double cellSize;
-    private final int noCells;
     private QuadTree<ExposureItem> quadTree;
     private double[] sumOverAllCellsPerTimeBin;
-    final private double exposureDistance;
 
-    public ExposureTimeQuadTree(Scenario scenario, int timeBinSize, int noTimeBins, double cellSize, double exposureDistance){
-        this.scenario = scenario;
+    public ExposureTimeQuadTree(double[] boundingBox, int timeBinSize, int noTimeBins, double cellSize){
         this.timeBinSize = timeBinSize;
         this.noTimeBins = noTimeBins;
         this.cellSize = cellSize;
         this.sumOverAllCellsPerTimeBin = new double[noTimeBins];
-        this.exposureDistance = exposureDistance;
 
         // initiate quad tree
-        double[] boundingBox = NetworkUtils.getBoundingBox(scenario.getNetwork().getNodes().values());
         this.quadTree = new QuadTree<>(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3]);
-
-        int noXCells = (int) Math.floor((boundingBox[2] - boundingBox[0]) / cellSize) + 1;
-        int noYCells = (int) Math.floor((boundingBox[3] - boundingBox[1]) / cellSize) + 1;
-        this.noCells = noXCells * noYCells;
     }
 
     public void add(Coord coord, int timeBin, double exposure) {
@@ -65,11 +52,11 @@ public class ExposureTimeQuadTree {
         return !collection.isEmpty();
     }
 
-    public double getExposureTimeFactorFor(Coord coord, int timeBin) {
-        Collection<ExposureItem> exposureItems = this.quadTree.getDisk(coord.getX(), coord.getY(), this.exposureDistance);
+    public double getExposureTimeFactorFor(Coord coord, int timeBin, double exposureDistance) {
+        Collection<ExposureItem> exposureItems = this.quadTree.getDisk(coord.getX(), coord.getY(), exposureDistance);
 
         // get average exposure for all cells in time bin
-        double averageExposure = this.sumOverAllCellsPerTimeBin[timeBin] / this.noCells;
+        double averageExposure = this.sumOverAllCellsPerTimeBin[timeBin] / this.quadTree.values().size();
 
         // if average is zero, then factor is zero (as no exposures were recorded in that timebin)
         if (averageExposure == 0.0) {
@@ -86,14 +73,6 @@ public class ExposureTimeQuadTree {
         return sumOfExposures / averageExposure;
     }
 
-    public Scenario getScenario() {
-        return scenario;
-    }
-
-    public QuadTree<ExposureItem> getDuration() {
-        return quadTree;
-    }
-
     public int getTimeBinSize() {
         return timeBinSize;
     }
@@ -104,10 +83,6 @@ public class ExposureTimeQuadTree {
 
     public double getCellSize() {
         return cellSize;
-    }
-
-    public int getNoCells() {
-        return noCells;
     }
 
     public QuadTree<ExposureItem> getQuadTree() {

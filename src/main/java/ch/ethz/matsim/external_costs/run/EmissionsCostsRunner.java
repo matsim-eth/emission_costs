@@ -1,5 +1,6 @@
-package ch.ethz.matsim.external_costs;
+package ch.ethz.matsim.external_costs.run;
 
+import ch.ethz.matsim.external_costs.utils.VehicleShareUtils;
 import ch.ethz.matsim.external_costs.collectors.EmissionCostsCollector;
 import ch.ethz.matsim.external_costs.costs.calculators.EmissionHealthCostCalculator;
 import ch.ethz.matsim.external_costs.costs.calculators.EmissionsClimateCostCalculator;
@@ -19,6 +20,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import java.io.IOException;
@@ -33,13 +35,13 @@ public class EmissionsCostsRunner {
 
     public static void main(String[] args) throws IOException {
 //
-        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/defaultIVTConfig_w_emissions.xml";
-        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/800.events.xml.gz";
-        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/emissionsCostPerPerson.csv";
+//        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/defaultIVTConfig_w_emissions.xml";
+//        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/800.events.xml.gz";
+//        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/zurich_1pct/scenario/emissionsCostPerPerson.csv";
 
-//        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/switzerland_config_w_emissions.xml";
-//        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/20.events.xml.gz";
-//        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/emissionsHealthCostPerPerson.csv";
+        String configFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/switzerland_config_w_emissions.xml";
+        String eventFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/20.events.xml.gz";
+        String outputFile = "/home/ctchervenkov/Documents/projects/road_pricing/switzerland_10pct/emissionsCostPerPerson.csv";
 
 //        String configFile = "/home/ctchervenkov/Documents/scenarios/pipeline/tchervi10pct/switzerland_config_w_emissions.xml";
 //        String eventFile = "/home/ctchervenkov/Documents/scenarios/pipeline/tchervi10pct/0.events.xml.gz";
@@ -67,9 +69,10 @@ public class EmissionsCostsRunner {
 
         // calculate exposure
         double cellSize = 100.0;
-        double exposureDistance = 250.0;
-        ExposureTimeQuadTree exposureTimeQuadTree = new ExposureTimeQuadTree(scenario, timeBinSize, noOfTimeBins,cellSize, exposureDistance);
-        IntervalHandler intervalHandler = new IntervalHandler(exposureTimeQuadTree);
+        double exposureDistance = 1000.0;
+        double[] boundingBox = NetworkUtils.getBoundingBox(scenario.getNetwork().getNodes().values());
+        ExposureTimeQuadTree exposureTimeQuadTree = new ExposureTimeQuadTree(boundingBox, timeBinSize, noOfTimeBins,cellSize);
+        IntervalHandler intervalHandler = new IntervalHandler(scenario, exposureTimeQuadTree);
 
         EventsManager eventsManager = new EventsManagerImpl();
         eventsManager.addHandler(intervalHandler);
@@ -91,7 +94,7 @@ public class EmissionsCostsRunner {
 
         Collection<ExternalCostCalculator> externalCostCalculators = new HashSet<>();
         externalCostCalculators.add(new EmissionsClimateCostCalculator(new SwitzerlandEmissionsClimateCostFactors()));
-        externalCostCalculators.add(new EmissionHealthCostCalculator(scenario, intervalHandler.getExposureTimeQuadTree(), new SwitzerlandEmissionsHealthCostFactors()));
+        externalCostCalculators.add(new EmissionHealthCostCalculator(scenario, intervalHandler.getExposureTimeQuadTree(), new SwitzerlandEmissionsHealthCostFactors(), exposureDistance));
 
         EmissionCostsCollector emissionsCollector = new EmissionCostsCollector(externalCostCalculators);
         EmissionsListener emissionsListener = new EmissionsListener(v2dh, emissionsCollector);

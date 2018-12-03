@@ -1,4 +1,4 @@
-package ch.ethz.matsim.external_costs;
+package ch.ethz.matsim.external_costs.utils;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;

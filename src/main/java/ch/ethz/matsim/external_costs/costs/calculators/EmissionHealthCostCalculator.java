@@ -13,11 +13,13 @@ public class EmissionHealthCostCalculator implements ExternalCostCalculator {
     private Scenario scenario;
     private ExposureTimeQuadTree exposureTimeQuadTree;
     private EmissionsCostFactors emissionsCostFactors;
+    private double exposureDistance;
 
-    public EmissionHealthCostCalculator(Scenario scenario, ExposureTimeQuadTree exposureTimeQuadTree, EmissionsCostFactors emissionsCostFactors) {
+    public EmissionHealthCostCalculator(Scenario scenario, ExposureTimeQuadTree exposureTimeQuadTree, EmissionsCostFactors emissionsCostFactors, double exposureDistance) {
         this.scenario = scenario;
         this.exposureTimeQuadTree = exposureTimeQuadTree;
         this.emissionsCostFactors = emissionsCostFactors;
+        this.exposureDistance = exposureDistance;
     }
 
     @Override
@@ -26,17 +28,15 @@ public class EmissionHealthCostCalculator implements ExternalCostCalculator {
         if (externality instanceof Emissions) {
 
             double time  = ((Emissions) externality).getTime();
-
-            int currentTimeBin = (int) Math.floor(time / this.exposureTimeQuadTree.getTimeBinSize());
-
-            Coord sourceCoord = scenario.getNetwork().getLinks().get(((Emissions) externality).getLinkId()).getCoord();
-            double dose = ((Emissions) externality).getEmissions().get("PM");
-
             int timeBin = TimeBinUtils.getTimeBinIndex(time, this.exposureTimeQuadTree.getTimeBinSize(), this.exposureTimeQuadTree.getNoTimeBins());
 
+            Coord coord = scenario.getNetwork().getLinks().get(((Emissions) externality).getLinkId()).getCoord();
+            double dose = ((Emissions) externality).getEmissions().get("PM");
+
             // multiply exposure time factor
-            double exposureTimeFactor = this.exposureTimeQuadTree.getExposureTimeFactorFor(sourceCoord, timeBin);
-            cost = (46000/1e6 * exposureTimeFactor + 260000/1e6) * dose;
+            double exposureTimeFactor = this.exposureTimeQuadTree.getExposureTimeFactorFor(coord, timeBin, this.exposureDistance);
+            cost = (186000./1e6 * exposureTimeFactor + 260000./1e6) * dose * 2370./2115.;
+//            cost = (46000/1e6 * exposureTimeFactor) * dose;
         }
         return cost;
     }

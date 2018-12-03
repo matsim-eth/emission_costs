@@ -1,5 +1,6 @@
-package ch.ethz.matsim.external_costs;
+package ch.ethz.matsim.external_costs.run;
 
+import ch.ethz.matsim.external_costs.utils.VehicleShareUtils;
 import ch.ethz.matsim.external_costs.collectors.EmissionCollector;
 import ch.ethz.matsim.external_costs.listeners.EmissionsListener;
 import ch.ethz.matsim.external_costs.writers.EmissionsPerPersonWriter;
